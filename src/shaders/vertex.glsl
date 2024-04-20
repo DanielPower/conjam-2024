@@ -1,16 +1,6 @@
-attribute vec2 aVertexPosition;
-
-uniform vec2 uScalingFactor;
-uniform vec2 uRotationVector;
-
+attribute vec2 a_position;
+varying vec2 v_texCoord;
 void main() {
-  vec2 rotatedPosition = vec2(
-    aVertexPosition.x * uRotationVector.y +
-          aVertexPosition.y * uRotationVector.x,
-    aVertexPosition.y * uRotationVector.y -
-          aVertexPosition.x * uRotationVector.x
-  );
-
-  gl_Position = vec4(rotatedPosition * uScalingFactor, 0.0, 1.0);
+    gl_Position = vec4(a_position, 0, 1);
+    v_texCoord = (a_position + 1.0) / 2.0;
 }
-

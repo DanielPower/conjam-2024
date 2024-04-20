@@ -1,187 +1,80 @@
 import "./style.css";
-import vertexShader from "./shaders/vertex.glsl?raw";
-import fragmentShader from "./shaders/fragment.glsl?raw";
+import fragmentShaderSource from "./shaders/fragment.glsl?raw";
+import vertexShaderSource from "./shaders/vertex.glsl?raw";
 import { panic } from "./util";
-
-type ShaderInfo = {
-  type: number;
-  code: string;
-};
-
-let gl: WebGLRenderingContext | null = null;
-let glCanvas: HTMLCanvasElement | null = null;
-
-let aspectRatio = 1;
-let currentRotation = [0, 1];
-let currentScale = [1.0, 1.0];
-
-let vertexArray: Float32Array;
-let vertexBuffer: WebGLBuffer;
-let vertexNumComponents: number;
-let vertexCount: number;
-
-let uScalingFactor: WebGLUniformLocation;
-let uGlobalColor: WebGLUniformLocation;
-let uRotationVector: WebGLUniformLocation;
-let aVertexPosition: number;
-
-let shaderProgram: WebGLProgram;
-let currentAngle = 0.0;
-let previousTime = 0.0;
-let degreesPerSecond = 90.0;
 
 window.addEventListener("load", startup, false);
 
 function startup() {
-  glCanvas = document.getElementById("glcanvas") as HTMLCanvasElement;
-  gl = glCanvas.getContext("webgl");
+  const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
+  const gl = canvas.getContext("webgl") || panic("WebGL not supported");
 
-  if (!gl) {
-    console.log("WebGL not supported");
-    return;
-  }
+  const texture = gl.createTexture() || panic("Error creating texture");
+  gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  const shaderSet: ShaderInfo[] = [
-    {
-      type: gl.VERTEX_SHADER,
-      code: vertexShader,
-    },
-    {
-      type: gl.FRAGMENT_SHADER,
-      code: fragmentShader,
-    },
-  ];
-
-  shaderProgram =
-    buildShaderProgram(shaderSet) || panic("Error building shader program");
-
-  aspectRatio = glCanvas.width / glCanvas.height;
-  currentRotation = [0, 1];
-  currentScale = [1.0, aspectRatio];
-
-  vertexArray = new Float32Array([
-    -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5,
+  // prettier-ignore
+  const texData = new Uint8Array([
+    255, 0, 0, 255, // Red
+    0, 255, 0, 255, // Green
+    0, 0, 255, 255, // Blue
+    255, 255, 0, 255, // Yellow
   ]);
 
-  vertexBuffer = gl.createBuffer() || panic("Error creating vertex buffer");
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
-
-  vertexNumComponents = 2;
-  vertexCount = vertexArray.length / vertexNumComponents;
-
-  currentAngle = 0.0;
-
-  animateScene();
-}
-
-function buildShaderProgram(shaderInfo: ShaderInfo[]) {
-  if (!gl) {
-    return null;
-  }
-
-  const program = gl.createProgram();
-
-  if (!program) {
-    return null;
-  }
-
-  for (const desc of shaderInfo) {
-    const shader = compileShader(desc.code, desc.type);
-
-    if (shader) {
-      gl.attachShader(program, shader);
-    }
-  }
-
-  gl.linkProgram(program);
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.log("Error linking shader program:");
-    console.log(gl.getProgramInfoLog(program));
-  }
-
-  return program;
-}
-
-function compileShader(code: string, type: number) {
-  if (!gl) {
-    return;
-  }
-
-  const shader = gl.createShader(type);
-
-  if (!shader) {
-    return null;
-  }
-
-  gl.shaderSource(shader, code);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.log(
-      `Error compiling ${
-        type === gl.VERTEX_SHADER ? "vertex" : "fragment"
-      } shader:`,
-    );
-    console.log(gl.getShaderInfoLog(shader));
-  }
-  return shader;
-}
-
-function animateScene() {
-  if (!gl || !glCanvas || !shaderProgram) {
-    return;
-  }
-
-  gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-  gl.clearColor(0.8, 0.9, 1.0, 1.0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  const radians = (currentAngle * Math.PI) / 180.0;
-  currentRotation[0] = Math.sin(radians);
-  currentRotation[1] = Math.cos(radians);
-
-  gl.useProgram(shaderProgram);
-
-  uScalingFactor =
-    gl.getUniformLocation(shaderProgram, "uScalingFactor") ||
-    panic("Error getting uniform location");
-  uGlobalColor =
-    gl.getUniformLocation(shaderProgram, "uGlobalColor") ||
-    panic("Error getting uniform location");
-  uRotationVector =
-    gl.getUniformLocation(shaderProgram, "uRotationVector") ||
-    panic("Error getting uniform location");
-
-  gl.uniform2fv(uScalingFactor, currentScale);
-  gl.uniform2fv(uRotationVector, currentRotation);
-  gl.uniform4fv(uGlobalColor, [0.1, 0.7, 0.2, 1.0]);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
-  aVertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-
-  gl.enableVertexAttribArray(aVertexPosition);
-  gl.vertexAttribPointer(
-    aVertexPosition,
-    vertexNumComponents,
-    gl.FLOAT,
-    false,
+  gl.texImage2D(
+    gl.TEXTURE_2D,
     0,
+    gl.RGBA,
+    2,
+    2,
     0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    texData,
   );
 
-  gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  requestAnimationFrame((currentTime) => {
-    const deltaAngle =
-      ((currentTime - previousTime) / 1000.0) * degreesPerSecond;
+  // Set viewport to match canvas size
+  gl.viewport(0, 0, canvas.width, canvas.height);
 
-    currentAngle = (currentAngle + deltaAngle) % 360;
+  // Create buffer for a square
+  const positionBuffer = gl.createBuffer()!;
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+    gl.STATIC_DRAW,
+  );
 
-    previousTime = currentTime;
-    animateScene();
-  });
+  const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+  gl.shaderSource(vertexShader, vertexShaderSource);
+  gl.compileShader(vertexShader);
+
+  const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+  gl.shaderSource(fragmentShader, fragmentShaderSource);
+  gl.compileShader(fragmentShader);
+
+  const shaderProgram = gl.createProgram()!;
+  gl.attachShader(shaderProgram, vertexShader);
+  gl.attachShader(shaderProgram, fragmentShader);
+  gl.linkProgram(shaderProgram);
+  gl.useProgram(shaderProgram);
+
+  // Set up attributes and uniforms
+  const positionAttributeLocation = gl.getAttribLocation(
+    shaderProgram,
+    "a_position",
+  );
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // Set up attributes and uniforms
+  const texLocation = gl.getUniformLocation(shaderProgram, "u_texture")!;
+  gl.uniform1i(texLocation, 0);
+
+  // Render
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
