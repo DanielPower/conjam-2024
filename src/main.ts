@@ -15,15 +15,15 @@ let aspectRatio = 1;
 let currentRotation = [0, 1];
 let currentScale = [1.0, 1.0];
 
-let vertexArray;
+let vertexArray: Float32Array;
 let vertexBuffer: WebGLBuffer;
 let vertexNumComponents: number;
 let vertexCount: number;
 
-let uScalingFactor;
-let uGlobalColor;
-let uRotationVector;
-let aVertexPosition;
+let uScalingFactor: WebGLUniformLocation;
+let uGlobalColor: WebGLUniformLocation;
+let uRotationVector: WebGLUniformLocation;
+let aVertexPosition: number;
 
 let shaderProgram: WebGLProgram;
 let currentAngle = 0.0;
@@ -145,9 +145,15 @@ function animateScene() {
 
   gl.useProgram(shaderProgram);
 
-  uScalingFactor = gl.getUniformLocation(shaderProgram, "uScalingFactor");
-  uGlobalColor = gl.getUniformLocation(shaderProgram, "uGlobalColor");
-  uRotationVector = gl.getUniformLocation(shaderProgram, "uRotationVector");
+  uScalingFactor =
+    gl.getUniformLocation(shaderProgram, "uScalingFactor") ||
+    panic("Error getting uniform location");
+  uGlobalColor =
+    gl.getUniformLocation(shaderProgram, "uGlobalColor") ||
+    panic("Error getting uniform location");
+  uRotationVector =
+    gl.getUniformLocation(shaderProgram, "uRotationVector") ||
+    panic("Error getting uniform location");
 
   gl.uniform2fv(uScalingFactor, currentScale);
   gl.uniform2fv(uRotationVector, currentRotation);
