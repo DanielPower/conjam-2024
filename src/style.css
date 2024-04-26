@@ -11,3 +11,9 @@ body {
   justify-content: center;
   min-height: 100vh;
 }
+
+#glcanvas {
+  width: 400px;
+  height: 400px;
+  image-rendering: pixelated;
+}

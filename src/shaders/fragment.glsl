@@ -1,10 +1,10 @@
 precision highp float;
-uniform sampler2D u_texture;
+uniform sampler2D u_texture; 
 varying vec2 v_texCoord;
 
 // Function to shift hue
 vec3 shiftHue(vec3 color, float hueShift) {
-    float angle = hueShift * 3.14159;
+    float angle = 0.;
     float s = sin(angle);
     float c = cos(angle);
     vec3 rotatedColor = vec3(
