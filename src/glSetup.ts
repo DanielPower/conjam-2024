@@ -28,9 +28,6 @@ export const createTexture = (gl: WebGLRenderingContext): WebGLTexture => {
 export const setupGL = (canvas: HTMLCanvasElement) => {
   const gl = canvas.getContext("webgl") || panic("WebGL not supported");
 
-  // Set viewport to match canvas size
-  gl.viewport(0, 0, canvas.width, canvas.height);
-
   // Create buffer for a square
   const positionBuffer = gl.createBuffer()!;
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
