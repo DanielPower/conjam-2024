@@ -1,20 +1,18 @@
 precision highp float;
-uniform sampler2D u_texture; 
+uniform sampler2D u_texture;
+uniform vec2 u_resolution;
 varying vec2 v_texCoord;
-
-const float width = 100.0;
-const float height = 100.0;
 
 int countNeighbors() {
     int neighbors = 0;
-    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / width, -1.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / width, 0.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / width, 1.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(0.0 / width, -1.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(0.0 / width, 1.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(1.0 / width, -1.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(1.0 / width, 0.0 / height)).r == 1.0) neighbors++;
-    if (texture2D(u_texture, v_texCoord + vec2(1.0 / width, 1.0 / height)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / u_resolution.x, -1.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / u_resolution.x, 0.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(-1.0 / u_resolution.x, 1.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(0.0 / u_resolution.x, -1.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(0.0 / u_resolution.x, 1.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(1.0 / u_resolution.x, -1.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(1.0 / u_resolution.x, 0.0 / u_resolution.y)).r == 1.0) neighbors++;
+    if (texture2D(u_texture, v_texCoord + vec2(1.0 / u_resolution.x, 1.0 / u_resolution.y)).r == 1.0) neighbors++;
     return neighbors;
 }
 

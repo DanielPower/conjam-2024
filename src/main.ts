@@ -1,8 +1,8 @@
 import "./style.css";
 import { createTexture, render, setupGL } from "./glSetup";
 
-const WIDTH = 100;
-const HEIGHT = 100;
+const WIDTH = 400;
+const HEIGHT = 400;
 let isRunning = false;
 
 const initialData = new Uint8Array(WIDTH * HEIGHT * 4);
@@ -16,10 +16,10 @@ for (let i = 0; i < initialData.length; i += 4) {
 
 function startup() {
   const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
-  const gl = setupGL(canvas);
-
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
+
+  const gl = setupGL(canvas);
 
   // Set viewport to match canvas size
   gl.viewport(0, 0, canvas.width, canvas.height);
@@ -40,20 +40,25 @@ function startup() {
     initialData,
   );
 
-  function renderLoop() {
-    if (isRunning) {
-      render(gl, textureA, textureB);
-    }
-    requestAnimationFrame(renderLoop);
+  const step = () => {
+    render(gl, textureA, textureB);
     [textureA, textureB] = [textureB, textureA];
   }
+
+  function renderLoop() {
+    if (isRunning) {
+      step();
+    }
+    requestAnimationFrame(() => renderLoop());
+  }
   renderLoop();
+
   const stepButton = document.getElementById('step')!;
   const playButton = document.getElementById('play')!;
-  stepButton.addEventListener("click", () => render(gl, textureA, textureB), false);
+  stepButton.addEventListener("click", () => step());
   playButton.addEventListener("click", () => {
     isRunning = !isRunning
-  }, false);
+  });
 }
 
 window.addEventListener("load", startup, false);

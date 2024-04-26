@@ -63,6 +63,9 @@ export const setupGL = (canvas: HTMLCanvasElement) => {
   const texLocation = gl.getUniformLocation(shaderProgram, "u_texture")!;
   gl.uniform1i(texLocation, 0);
 
+  const resolutionLocation = gl.getUniformLocation(shaderProgram, "u_resolution")!;
+  gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
   return gl;
 };
 
