@@ -52,7 +52,7 @@ function startup() {
 
   function renderLoop() {
     [textureA, textureB] = [textureB, textureA];
-    render(gl, textureA);
+    render(gl, textureA, textureB);
     requestAnimationFrame(renderLoop);
   }
   renderLoop();

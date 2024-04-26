@@ -69,11 +69,30 @@ export const setupGL = (canvas: HTMLCanvasElement) => {
   return gl;
 };
 
-export const render = (gl: WebGLRenderingContext, texture: WebGLTexture) => {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+export const render = (gl: WebGLRenderingContext, inputTexture: WebGLTexture, outputTexture: WebGLTexture) => {
+  // Create and bind the framebuffer
+  const framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // Attach the output texture to the framebuffer
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
+
+  // Check if the framebuffer is complete
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error('Error setting up framebuffer');
+    return;
+  }
+
+  // Bind the input texture
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+
+  // Clear and draw to the output texture through the framebuffer
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+  // Unbind the framebuffer and texture when done
+  gl.bindTexture(gl.TEXTURE_2D, outputTexture);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };
