@@ -3,8 +3,8 @@ import {
   compileShaders,
   createConwayProgram,
   createGravityProgram,
+  createRenderProgram,
   createTexture,
-  createUpdateProgram,
   render,
   setupGL
 } from "./glSetup";
@@ -48,22 +48,22 @@ function startup() {
   );
 
   const shaders = compileShaders(gl);
-  const updateProgram = createUpdateProgram(gl, shaders);
+  const renderProgram = createRenderProgram(gl, shaders);
   const gravityProgram = createGravityProgram(gl, shaders)
   const conwayProgram = createConwayProgram(gl, shaders);
 
   const step = () => {
-    render(gl, gravityProgram, textureA, textureB);
-    [textureA, textureB] = [textureB, textureA];
-    render(gl, updateProgram, textureA, textureB);
-    [textureA, textureB] = [textureB, textureA];
+    [gravityProgram, conwayProgram].forEach(program => {
+      render(gl, program, textureA, textureB);
+      [textureA, textureB] = [textureB, textureA];
+    });
   }
 
   const renderLoop = () => {
     if (isRunning) {
       step();
     }
-    render(gl, conwayProgram, textureA, textureB)
+    render(gl, renderProgram, textureA, textureB)
     requestAnimationFrame(() => renderLoop());
   }
   renderLoop();

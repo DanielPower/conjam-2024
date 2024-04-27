@@ -1,7 +1,7 @@
 import { panic } from "./util";
-import fragmentShaderSource from "./shaders/fragment.glsl?raw";
-import vertexShaderSource from "./shaders/vertex.glsl?raw";
 import conwayShaderSource from "./shaders/conway.glsl?raw";
+import vertexShaderSource from "./shaders/vertex.glsl?raw";
+import renderShaderSource from "./shaders/render.glsl?raw";
 import gravityShaderSource from "./shaders/gravity.glsl?raw";
 
 export const createTexture = (gl: WebGLRenderingContext): WebGLTexture => {
@@ -32,9 +32,9 @@ export const compileShaders = (gl: WebGLRenderingContext) => {
   gl.shaderSource(vertexShader, vertexShaderSource);
   gl.compileShader(vertexShader);
 
-  const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-  gl.shaderSource(fragmentShader, fragmentShaderSource);
-  gl.compileShader(fragmentShader);
+  const renderShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+  gl.shaderSource(renderShader, renderShaderSource);
+  gl.compileShader(renderShader);
 
   const conwayShader = gl.createShader(gl.FRAGMENT_SHADER)!;
   gl.shaderSource(conwayShader, conwayShaderSource);
@@ -44,13 +44,13 @@ export const compileShaders = (gl: WebGLRenderingContext) => {
   gl.shaderSource(gravityShader, gravityShaderSource);
   gl.compileShader(gravityShader);
 
-  return { vertexShader, fragmentShader, conwayShader, gravityShader };
+  return { vertexShader, renderShader, conwayShader, gravityShader };
 }
 
-export const createUpdateProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
+export const createRenderProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
     const program = gl.createProgram()!;
     gl.attachShader(program, shaders.vertexShader);
-    gl.attachShader(program, shaders.fragmentShader);
+    gl.attachShader(program, shaders.renderShader);
     gl.linkProgram(program);
     gl.useProgram(program);
 
