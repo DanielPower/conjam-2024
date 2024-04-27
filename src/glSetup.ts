@@ -2,6 +2,7 @@ import { panic } from "./util";
 import fragmentShaderSource from "./shaders/fragment.glsl?raw";
 import vertexShaderSource from "./shaders/vertex.glsl?raw";
 import renderShaderSource from "./shaders/render.glsl?raw";
+import gravityShaderSource from "./shaders/gravity.glsl?raw";
 
 export const createTexture = (gl: WebGLRenderingContext): WebGLTexture => {
   const texture = gl.createTexture() || panic("Error creating texture");
@@ -39,53 +40,80 @@ export const compileShaders = (gl: WebGLRenderingContext) => {
   gl.shaderSource(renderShader, renderShaderSource);
   gl.compileShader(renderShader);
 
-  return { vertexShader, fragmentShader, renderShader };
+  const gravityShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+  gl.shaderSource(gravityShader, gravityShaderSource);
+  gl.compileShader(gravityShader);
+
+  return { vertexShader, fragmentShader, renderShader, gravityShader };
 }
 
 export const createUpdateProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
-    const updateProgram = gl.createProgram()!;
-    gl.attachShader(updateProgram, shaders.vertexShader);
-    gl.attachShader(updateProgram, shaders.fragmentShader);
-    gl.linkProgram(updateProgram);
-    gl.useProgram(updateProgram);
+    const program = gl.createProgram()!;
+    gl.attachShader(program, shaders.vertexShader);
+    gl.attachShader(program, shaders.fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
 
     const positionAttributeLocation = gl.getAttribLocation(
-        updateProgram,
+        program,
         "a_position",
     );
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const texLocation = gl.getUniformLocation(updateProgram, "u_texture")!;
+    const texLocation = gl.getUniformLocation(program, "u_texture")!;
     gl.uniform1i(texLocation, 0);
 
-    const resolutionLocation = gl.getUniformLocation(updateProgram, "u_resolution")!;
+    const resolutionLocation = gl.getUniformLocation(program, "u_resolution")!;
     gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-    return updateProgram;
+    return program;
 }
 
 export const createRenderProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
-  const renderProgram = gl.createProgram()!;
-  gl.attachShader(renderProgram, shaders.vertexShader);
-  gl.attachShader(renderProgram, shaders.renderShader)
-  gl.linkProgram(renderProgram);
-  gl.useProgram(renderProgram);
+  const program = gl.createProgram()!;
+  gl.attachShader(program, shaders.vertexShader);
+  gl.attachShader(program, shaders.renderShader)
+  gl.linkProgram(program);
+  gl.useProgram(program);
 
   const positionAttributeLocation = gl.getAttribLocation(
-    renderProgram,
+    program,
     "a_position",
   );
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-  const texLocation = gl.getUniformLocation(renderProgram, "u_texture")!;
+  const texLocation = gl.getUniformLocation(program, "u_texture")!;
   gl.uniform1i(texLocation, 0);
 
-  const resolutionLocation = gl.getUniformLocation(renderProgram, "u_resolution")!;
+  const resolutionLocation = gl.getUniformLocation(program, "u_resolution")!;
   gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-  return renderProgram;
+  return program;
+}
+
+export const createGravityProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
+  const program = gl.createProgram()!;
+  gl.attachShader(program, shaders.vertexShader);
+  gl.attachShader(program, shaders.gravityShader)
+  gl.linkProgram(program);
+  gl.useProgram(program);
+
+  const positionAttributeLocation = gl.getAttribLocation(
+    program,
+    "a_position",
+  );
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  const texLocation = gl.getUniformLocation(program, "u_texture")!;
+  gl.uniform1i(texLocation, 0);
+
+  const resolutionLocation = gl.getUniformLocation(program, "u_resolution")!;
+  gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+  return program;
 }
 
 export const setupGL = (canvas: HTMLCanvasElement) => {

@@ -1,5 +1,13 @@
 import "./style.css";
-import {compileShaders, createRenderProgram, createTexture, createUpdateProgram, render, setupGL} from "./glSetup";
+import {
+  compileShaders,
+  createGravityProgram,
+  createRenderProgram,
+  createTexture,
+  createUpdateProgram,
+  render,
+  setupGL
+} from "./glSetup";
 
 const WIDTH = 400;
 const HEIGHT = 400;
@@ -7,10 +15,9 @@ let isRunning = false;
 
 const initialData = new Uint8Array(WIDTH * HEIGHT * 4);
 for (let i = 0; i < initialData.length; i += 4) {
-  const value = Math.random() > 0.5 ? 255 : 0;
-  initialData[i] = value
-  initialData[i + 1] = value
-  initialData[i + 2] = value
+  initialData[i] = Math.random() > 0.5 ? 255 : 0
+  initialData[i + 1] = 0
+  initialData[i + 2] = 0
   initialData[i + 3] = 255;
 }
 
@@ -42,9 +49,12 @@ function startup() {
 
   const shaders = compileShaders(gl);
   const updateProgram = createUpdateProgram(gl, shaders);
+  const gravityProgram = createGravityProgram(gl, shaders)
   const renderProgram = createRenderProgram(gl, shaders);
 
   const step = () => {
+    render(gl, gravityProgram, textureA, textureB);
+    [textureA, textureB] = [textureB, textureA];
     render(gl, updateProgram, textureA, textureB);
     [textureA, textureB] = [textureB, textureA];
   }
