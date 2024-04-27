@@ -9,8 +9,8 @@ import {
   setupGL
 } from "./glSetup";
 
-const WIDTH = 400;
-const HEIGHT = 400;
+const WIDTH = 1280;
+const HEIGHT = 800;
 let isRunning = false;
 
 const initialData = new Uint8Array(WIDTH * HEIGHT * 4);
@@ -53,7 +53,7 @@ function startup() {
   const conwayProgram = createConwayProgram(gl, shaders);
 
   const step = () => {
-    [gravityProgram, conwayProgram].forEach(program => {
+    [gravityProgram].forEach(program => {
       render(gl, program, textureA, textureB);
       [textureA, textureB] = [textureB, textureA];
     });
