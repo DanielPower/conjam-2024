@@ -1,6 +1,7 @@
 import { panic } from "./util";
 import fragmentShaderSource from "./shaders/fragment.glsl?raw";
 import vertexShaderSource from "./shaders/vertex.glsl?raw";
+import renderShaderSource from "./shaders/render.glsl?raw";
 
 export const createTexture = (gl: WebGLRenderingContext): WebGLTexture => {
   const texture = gl.createTexture() || panic("Error creating texture");
@@ -25,18 +26,7 @@ export const createTexture = (gl: WebGLRenderingContext): WebGLTexture => {
   return texture;
 };
 
-export const setupGL = (canvas: HTMLCanvasElement) => {
-  const gl = canvas.getContext("webgl") || panic("WebGL not supported");
-
-  // Create buffer for a square
-  const positionBuffer = gl.createBuffer()!;
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-    gl.STATIC_DRAW,
-  );
-
+export const compileShaders = (gl: WebGLRenderingContext) => {
   const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
   gl.shaderSource(vertexShader, vertexShaderSource);
   gl.compileShader(vertexShader);
@@ -45,54 +35,89 @@ export const setupGL = (canvas: HTMLCanvasElement) => {
   gl.shaderSource(fragmentShader, fragmentShaderSource);
   gl.compileShader(fragmentShader);
 
-  const shaderProgram = gl.createProgram()!;
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-  gl.useProgram(shaderProgram);
+  const renderShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+  gl.shaderSource(renderShader, renderShaderSource);
+  gl.compileShader(renderShader);
 
-  // Set up attributes and uniforms
+  return { vertexShader, fragmentShader, renderShader };
+}
+
+export const createUpdateProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
+    const updateProgram = gl.createProgram()!;
+    gl.attachShader(updateProgram, shaders.vertexShader);
+    gl.attachShader(updateProgram, shaders.fragmentShader);
+    gl.linkProgram(updateProgram);
+    gl.useProgram(updateProgram);
+
+    const positionAttributeLocation = gl.getAttribLocation(
+        updateProgram,
+        "a_position",
+    );
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+    const texLocation = gl.getUniformLocation(updateProgram, "u_texture")!;
+    gl.uniform1i(texLocation, 0);
+
+    const resolutionLocation = gl.getUniformLocation(updateProgram, "u_resolution")!;
+    gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    return updateProgram;
+}
+
+export const createRenderProgram = (gl: WebGLRenderingContext, shaders: ReturnType<typeof compileShaders>) => {
+  const renderProgram = gl.createProgram()!;
+  gl.attachShader(renderProgram, shaders.vertexShader);
+  gl.attachShader(renderProgram, shaders.renderShader)
+  gl.linkProgram(renderProgram);
+  gl.useProgram(renderProgram);
+
   const positionAttributeLocation = gl.getAttribLocation(
-    shaderProgram,
+    renderProgram,
     "a_position",
   );
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-  // Set up attributes and uniforms
-  const texLocation = gl.getUniformLocation(shaderProgram, "u_texture")!;
+  const texLocation = gl.getUniformLocation(renderProgram, "u_texture")!;
   gl.uniform1i(texLocation, 0);
 
-  const resolutionLocation = gl.getUniformLocation(shaderProgram, "u_resolution")!;
+  const resolutionLocation = gl.getUniformLocation(renderProgram, "u_resolution")!;
   gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+  return renderProgram;
+}
+
+export const setupGL = (canvas: HTMLCanvasElement) => {
+  const gl = canvas.getContext("webgl") || panic("WebGL not supported");
+
+  const positionBuffer = gl.createBuffer()!;
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+    gl.STATIC_DRAW,
+  );
 
   return gl;
 };
 
-export const render = (gl: WebGLRenderingContext, inputTexture: WebGLTexture, outputTexture: WebGLTexture) => {
-  // Create and bind the framebuffer
+export const render = (gl: WebGLRenderingContext, program: WebGLProgram, inputTexture: WebGLTexture, outputTexture: WebGLTexture) => {
+  gl.useProgram(program);
+
   const framebuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-
-  // Attach the output texture to the framebuffer
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
 
-  // Check if the framebuffer is complete
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
     console.error('Error setting up framebuffer');
     return;
   }
 
-  // Bind the input texture
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-
-  // Clear and draw to the output texture through the framebuffer
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-  // Unbind the framebuffer and texture when done
-  gl.bindTexture(gl.TEXTURE_2D, outputTexture);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };

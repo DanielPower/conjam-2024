@@ -1,5 +1,5 @@
 import "./style.css";
-import { createTexture, render, setupGL } from "./glSetup";
+import {compileShaders, createRenderProgram, createTexture, createUpdateProgram, render, setupGL} from "./glSetup";
 
 const WIDTH = 400;
 const HEIGHT = 400;
@@ -40,15 +40,20 @@ function startup() {
     initialData,
   );
 
+  const shaders = compileShaders(gl);
+  const updateProgram = createUpdateProgram(gl, shaders);
+  const renderProgram = createRenderProgram(gl, shaders);
+
   const step = () => {
-    render(gl, textureA, textureB);
+    render(gl, updateProgram, textureA, textureB);
     [textureA, textureB] = [textureB, textureA];
   }
 
-  function renderLoop() {
+  const renderLoop = () => {
     if (isRunning) {
       step();
     }
+    render(gl, renderProgram, textureA, textureB)
     requestAnimationFrame(() => renderLoop());
   }
   renderLoop();
