@@ -1,8 +1,8 @@
 import "./style.css";
 import {
   compileShaders,
+  createConwayProgram,
   createGravityProgram,
-  createRenderProgram,
   createTexture,
   createUpdateProgram,
   render,
@@ -50,7 +50,7 @@ function startup() {
   const shaders = compileShaders(gl);
   const updateProgram = createUpdateProgram(gl, shaders);
   const gravityProgram = createGravityProgram(gl, shaders)
-  const renderProgram = createRenderProgram(gl, shaders);
+  const conwayProgram = createConwayProgram(gl, shaders);
 
   const step = () => {
     render(gl, gravityProgram, textureA, textureB);
@@ -63,7 +63,7 @@ function startup() {
     if (isRunning) {
       step();
     }
-    render(gl, renderProgram, textureA, textureB)
+    render(gl, conwayProgram, textureA, textureB)
     requestAnimationFrame(() => renderLoop());
   }
   renderLoop();
